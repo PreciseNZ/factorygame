@@ -1,6 +1,6 @@
 use macroquad::prelude::*;
+use macroquad::rand::gen_range;
 
-const GRID_SIZE: usize = 16;
 const TILE_W: f32 = 64.0;
 const TILE_H: f32 = 32.0;
 
@@ -12,27 +12,73 @@ enum TileKind {
     Ore,
 }
 
+impl TileKind {
+    fn base_color(self) -> Color {
+        match self {
+            TileKind::Empty => Color::from_rgba(110, 75, 48, 255),
+            TileKind::Water => Color::from_rgba(55, 120, 195, 255),
+            TileKind::Sand => Color::from_rgba(235, 215, 130, 255),
+            TileKind::Ore => Color::from_rgba(28, 30, 34, 255),
+        }
+    }
+}
+            
+
 struct Game {
     cursor: (usize, usize),
     selected: Option<(usize, usize)>,
     camera_offset: Vec2,
     last_right_mouse: Option<Vec2>,
+    map: Vec<TileKind>,
+    width: usize,
+    height: usize,
 }
 
 impl Game {
-    fn new() -> Self {
+    fn new(starting_width: usize, starting_height: usize) -> Self {
+        let mut random_map = Vec::with_capacity(starting_width * starting_height);
+        for _ in 0..(starting_width * starting_height) {
+            let roll = gen_range(0, 100);
+            let tile = if roll < 20 {
+                TileKind::Water
+            } else if roll < 40 {
+                TileKind::Sand
+            } else if roll < 52 {
+                TileKind::Ore
+            } else {
+                TileKind::Empty
+            };
+            random_map.push(tile);
+        }
         Self {
             cursor: (0, 0),
             selected: None,
             camera_offset: vec2(0.0,0.0),
             last_right_mouse: None,
+            map: random_map,
+            width: starting_width,
+            height: starting_height,
         }
+    }
+
+    fn tile_at(&self, gx: usize, gy: usize) -> Option<TileKind> {
+        if let Some(index) = self.grid_index(gx, gy) {
+            return Some(self.map[index])
+        }
+        None
+    }
+
+    fn grid_index(&self, gx: usize, gy: usize) -> Option<usize> {
+        if gx < self.width && gy < self.height {
+            return Some(gy * self.width + gx)
+        }
+        None
     }
 
     fn grid_origin(&self) -> (f32, f32) {
         (
-        screen_width() * 0.5 + self.camera_offset.x,
-        120.0 + self.camera_offset.y,
+            screen_width() * 0.5 + self.camera_offset.x,
+            120.0 + self.camera_offset.y,
         )
     }
 
@@ -69,7 +115,7 @@ impl Game {
         let gx = fx.floor() as usize;
         let gy = fy.floor() as usize;
 
-        if gx < GRID_SIZE && gy < GRID_SIZE {
+        if gx < self.width && gy < self.height {
             Some((gx, gy))
         } else {
             None
@@ -102,7 +148,7 @@ impl Game {
         draw_line(bottom.x, bottom.y, left.x, left.y, 1.2, outline);
         draw_line(left.x, left.y, top.x, top.y, 1.2, outline);
     }
-fn update(&mut self) {
+    fn update(&mut self) {
         let pan_speed = 320.0 * get_frame_time();
         if is_key_down(KeyCode::D) {
             self.camera_offset.x -= pan_speed;
@@ -130,7 +176,7 @@ fn update(&mut self) {
         let mut moved_by_key = false;
 
         if is_key_pressed(KeyCode::Right) {
-            self.cursor.0 = (self.cursor.0 + 1).min(GRID_SIZE - 1);
+            self.cursor.0 = (self.cursor.0 + 1).min(self.width - 1);
             moved_by_key = true;
         }
         if is_key_pressed(KeyCode::Left) {
@@ -138,7 +184,7 @@ fn update(&mut self) {
             moved_by_key = true;
         }
         if is_key_pressed(KeyCode::Down) {
-            self.cursor.1 = (self.cursor.1 + 1).min(GRID_SIZE - 1);
+            self.cursor.1 = (self.cursor.1 + 1).min(self.height - 1);
             moved_by_key = true;
         }
         if is_key_pressed(KeyCode::Up) {
@@ -171,20 +217,22 @@ fn update(&mut self) {
 
         let (origin_x, origin_y) = self.grid_origin();
 
-        for gy in 0..GRID_SIZE {
-            for gx in 0..GRID_SIZE {
+        for gy in 0..self.height {
+            for gx in 0..self.width {
                 let is_cursor = self.cursor == (gx, gy);
                 let is_selected = self.selected == Some((gx, gy));
+                
+                let mut fill = self.tile_at(gx, gy).unwrap_or(TileKind::Empty).base_color();
 
-                let fill = if is_selected {
-                    Color::from_rgba(90, 175, 110, 255)
-                } else if is_cursor {
-                    Color::from_rgba(220, 185, 75, 255)
-                } else if (gx + gy) % 2 == 0 {
-                    Color::from_rgba(52, 62, 76, 255)
-                } else {
-                    Color::from_rgba(46, 55, 68, 255)
-                };
+                if is_cursor {
+                    fill.r = (fill.r * 0.82).clamp(0.0, 1.0);
+                    fill.g = (fill.g * 0.82).clamp(0.0, 1.0);
+                    fill.b = (fill.b * 0.82).clamp(0.0, 1.0);
+                } else if is_selected {
+                    fill.r = (fill.r + 0.15).clamp(0.0, 1.0);
+                    fill.g = (fill.g + 0.15).clamp(0.0, 1.0);
+                    fill.b = (fill.b + 0.15).clamp(0.0, 1.0);
+                }
 
                 let outline = Color::from_rgba(30, 36, 45, 255);
                 self.draw_iso_tile(gx, gy, origin_x, origin_y, fill, outline);
@@ -213,7 +261,7 @@ fn update(&mut self) {
 
 #[macroquad::main("Isometric Grid")]
 async fn main() {
-    let mut game = Game::new();
+    let mut game = Game::new(16, 16);
 
     loop {
         game.update();
