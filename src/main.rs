@@ -22,7 +22,6 @@ impl TileKind {
         }
     }
 }
-            
 
 struct Game {
     cursor: (usize, usize),
@@ -53,7 +52,7 @@ impl Game {
         Self {
             cursor: (0, 0),
             selected: None,
-            camera_offset: vec2(0.0,0.0),
+            camera_offset: vec2(0.0, 0.0),
             last_right_mouse: None,
             map: random_map,
             width: starting_width,
@@ -63,14 +62,14 @@ impl Game {
 
     fn tile_at(&self, gx: usize, gy: usize) -> Option<TileKind> {
         if let Some(index) = self.grid_index(gx, gy) {
-            return Some(self.map[index])
+            return Some(self.map[index]);
         }
         None
     }
 
     fn grid_index(&self, gx: usize, gy: usize) -> Option<usize> {
         if gx < self.width && gy < self.height {
-            return Some(gy * self.width + gx)
+            return Some(gy * self.width + gx);
         }
         None
     }
@@ -90,13 +89,6 @@ impl Game {
         (sx, sy)
     }
 
-    /// Converts screen coordinates to grid coordinates `(gx, gy)` if inside the grid.
-    ///
-    /// Note: `grid_to_screen` maps `(gx, gy)` to the *center* of the diamond tile:
-    /// `dx = sx - origin_x = (fx - fy) * hw`
-    /// `dy = sy - origin_y = (fx + fy) * hh`
-    /// Shifting by `(0.0, -hh)` aligns the diamond's top vertex with `(0, 0)` in `(fx, fy)` space,
-    /// so `floor()` resolves cleanly across diamond boundaries.
     fn screen_to_grid(&self, sx: f32, sy: f32) -> Option<(usize, usize)> {
         let (origin_x, origin_y) = self.grid_origin();
         let hw = TILE_W * 0.5;
@@ -221,7 +213,7 @@ impl Game {
             for gx in 0..self.width {
                 let is_cursor = self.cursor == (gx, gy);
                 let is_selected = self.selected == Some((gx, gy));
-                
+
                 let mut fill = self.tile_at(gx, gy).unwrap_or(TileKind::Empty).base_color();
 
                 if is_cursor {
