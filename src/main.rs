@@ -81,7 +81,12 @@ impl Game {
         )
     }
 
-    fn grid_to_screen(&self, gx: usize, gy: usize, origin_x: f32, origin_y: f32) -> (f32, f32) {
+    fn grid_to_screen(&self,
+        gx: usize,
+        gy: usize,
+        origin_x: f32,
+        origin_y: f32
+        ) -> (f32, f32) {
         let fx = gx as f32;
         let fy = gy as f32;
         let sx = origin_x + (fx - fy) * (TILE_W * 0.5);
@@ -116,12 +121,9 @@ impl Game {
 
     fn draw_iso_tile(
         &self,
-        gx: usize,
-        gy: usize,
-        origin_x: f32,
-        origin_y: f32,
-        fill: Color,
-        outline: Color,
+        gx: usize, gy: usize,
+        origin_x: f32, origin_y: f32,
+        fill: Color, outline: Color,
     ) {
         let (cx, cy) = self.grid_to_screen(gx, gy, origin_x, origin_y);
         let hw = TILE_W * 0.5;
@@ -231,27 +233,27 @@ impl Game {
             }
         }
 
-        draw_text(
-            &format!(
-                "Cursor: ({}, {}) | Selected: {:?}",
-                self.cursor.0, self.cursor.1, self.selected
-            ),
-            16.0,
-            28.0,
-            24.0,
-            WHITE,
-        );
-        draw_text(
-            "Pan: WASD / Right-Drag | Cursor: Arrows / Hover | Click / Enter: Select",
-            16.0,
-            54.0,
-            20.0,
-            LIGHTGRAY,
-        );
+        // draw_text(
+        //     &format!(
+        //         "Cursor: ({}, {}) | Selected: {:?}",
+        //         self.cursor.0, self.cursor.1, self.selected
+        //     ),
+        //     16.0,
+        //     28.0,
+        //     24.0,
+        //     WHITE,
+        // );
+        // draw_text(
+        //     "Pan: WASD / Right-Drag | Cursor: Arrows / Hover | Click / Enter: Select",
+        //     16.0,
+        //     54.0,
+        //     20.0,
+        //     LIGHTGRAY,
+        // );
     }
 }
 
-#[macroquad::main("Isometric Grid")]
+#[macroquad::main("Factory Game")]
 async fn main() {
     let mut game = Game::new(16, 16);
 
